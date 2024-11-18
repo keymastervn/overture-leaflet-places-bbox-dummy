@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_18_094151) do
+ActiveRecord::Schema[7.1].define(version: 2024_11_18_171336) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
@@ -37,6 +37,21 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_18_094151) do
     t.index ["alternate_categories"], name: "index_places_on_alternate_categories", using: :gin
     t.index ["external_id"], name: "index_places_on_external_id", unique: true
     t.index ["primary_categories"], name: "index_places_on_primary_categories"
+  end
+
+  create_table "search_grids", force: :cascade do |t|
+    t.decimal "sw_lat", precision: 10, scale: 6, null: false
+    t.decimal "sw_lng", precision: 10, scale: 6, null: false
+    t.decimal "ne_lat", precision: 10, scale: 6, null: false
+    t.decimal "ne_lng", precision: 10, scale: 6, null: false
+    t.decimal "center_lat", precision: 10, scale: 6, null: false
+    t.decimal "center_lng", precision: 10, scale: 6, null: false
+    t.integer "radius", null: false
+    t.string "place_types", default: [], array: true
+    t.string "hex_color"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["place_types"], name: "index_search_grids_on_place_types", using: :gin
   end
 
 end
