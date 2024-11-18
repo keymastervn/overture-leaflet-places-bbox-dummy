@@ -10,10 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_18_092757) do
+ActiveRecord::Schema[7.1].define(version: 2024_11_18_092907) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
   enable_extension "plpgsql"
+
+  create_table "places", force: :cascade do |t|
+    t.string "external_id", null: false
+    t.string "name"
+    t.jsonb "names"
+    t.jsonb "categories"
+    t.float "confidence"
+    t.jsonb "websites"
+    t.jsonb "socials"
+    t.string "emails", default: [], array: true
+    t.string "phones", default: [], array: true
+    t.string "brand"
+    t.jsonb "addresses"
+    t.jsonb "sources"
+    t.decimal "longitude", precision: 10, scale: 6
+    t.decimal "latitude", precision: 10, scale: 6
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_id"], name: "index_places_on_external_id", unique: true
+  end
 
 end
