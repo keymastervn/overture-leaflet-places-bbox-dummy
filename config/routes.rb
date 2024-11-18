@@ -10,4 +10,6 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   root "maps#index"
+
+  resources :search_grids, only: [:index, :show]
 end
