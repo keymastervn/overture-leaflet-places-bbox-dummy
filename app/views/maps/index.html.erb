@@ -1,8 +1,33 @@
-<div id="map" style="height: 500px;"></div>
-<script>
-    const map = L.map("map").setView([-31.2532, 146.9211], 6);
+<style type="text/css">
+  #actions button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+</style>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-    }).addTo(map);
+<div id="map" style="height: 900px; margin: 0; padding: 0;"></div>
+<div id="actions" style="height: 200px; margin: 0; padding: 0;">
+  <button id="displayBoundsButton">Display Bounds</button>
+</div>
+<script>
+  const map = L.map("map").setView([-31.2532, 146.9211], 6);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+  }).addTo(map);
+
+
+  document.getElementById('displayBoundsButton').addEventListener('click', function() {
+    displayBounds(exampleBounds);
+  });
+
+  // Function to display the bounds on the map
+  function displayBounds(bounds) {
+    // Fit the map view to the given bounds
+    map.fitBounds(bounds);
+  }
 </script>
