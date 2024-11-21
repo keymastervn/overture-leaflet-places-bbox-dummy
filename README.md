@@ -84,3 +84,10 @@ irb(main):001> Place.count
 => 301762
 ```
 
+## Install POSTGIS
+
+https://postgis.net/workshops/postgis-intro/installation.html
+
+https://stackoverflow.com/a/77204579
+
+

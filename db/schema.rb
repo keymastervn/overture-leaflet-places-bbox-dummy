@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_18_171336) do
+ActiveRecord::Schema[7.1].define(version: 2024_11_18_184214) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
   enable_extension "plpgsql"
+  enable_extension "postgis"
 
   create_table "places", force: :cascade do |t|
     t.string "external_id", null: false
@@ -52,6 +53,14 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_18_171336) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["place_types"], name: "index_search_grids_on_place_types", using: :gin
+  end
+
+  create_table "spatial_ref_sys", primary_key: "srid", id: :integer, default: nil, force: :cascade do |t|
+    t.string "auth_name", limit: 256
+    t.integer "auth_srid"
+    t.string "srtext", limit: 2048
+    t.string "proj4text", limit: 2048
+    t.check_constraint "srid > 0 AND srid <= 998999", name: "spatial_ref_sys_srid_check"
   end
 
 end
