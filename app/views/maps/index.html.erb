@@ -1,4 +1,10 @@
 <style type="text/css">
+  html, body {
+    height: 100%; /* Ensures the body and HTML elements fill the entire viewport */
+    margin: 0; /* Removes default margins */
+    overflow: hidden; /* Prevents scrolling if content overflows */
+  }
+
   #actions button {
     padding: 10px 20px;
     font-size: 16px;
@@ -7,22 +13,127 @@
     border: none;
     cursor: pointer;
   }
+
+  #actions button:hover {
+    background-color: #0056b3; /* Changes button color on hover */
+  }
+
+  #actions {
+    position: fixed; /* Ensures the actions panel stays in one place */
+    bottom: 20px; /* Adjusts the distance from the bottom of the viewport */
+    right: 20px; /* Adjusts the distance from the right side of the viewport */
+    z-index: 1000; /* Ensures it is above other elements */
+    background-color: rgba(255, 255, 255, 0.9); /* Adds a semi-transparent background */
+    padding: 10px; /* Adds some inner spacing */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Gives a subtle shadow for better visibility */
+    border-radius: 8px; /* Rounds the corners */
+    border: 1px solid #ccc; /* Optional: Adds a light border */
+  }
 </style>
 
-<div id="map" style="height: 900px; margin: 0; padding: 0;"></div>
+<div id="map" style="height: 100%; width: 100%; position: relative;"></div>
 <div id="actions" style="height: 200px; margin: 0; padding: 0;">
   <button id="displayBoundsButton">Display Bounds</button>
+
+  <button id="displayMarkerClusters">Display Marker Clusters</button>
+
+  <button id="displayMarkers">Display Markers</button>
 </div>
 <script>
-  const map = L.map("map").setView([-31.2532, 146.9211], 6);
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+  }
+
+  function markerDOM(name, address, latitude, longitude) {
+    return `
+      <div>
+        <p><b>${name}</b></p>
+        <p><b>${address}</b></p>
+        <p><b>${latitude},${longitude}</b></p>
+      </div>
+    `
+  }
+</script>
+
+<script>
+  const map = L.map("map").setView([-33.907635, 150.921796], 11);
+  var $mapMarkers = [];
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
   }).addTo(map);
 
+  function loadPlaces() {
+    const bounds = map.getBounds();
+
+    const params = new URLSearchParams({
+      sw_lat: bounds.getSouthWest().lat,
+      sw_lng: bounds.getSouthWest().lng,
+      ne_lat: bounds.getNorthEast().lat,
+      ne_lng: bounds.getNorthEast().lng
+    });
+
+    fetch(`/places?${params}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Create a new marker cluster group
+      $mapMarkers = data;
+    })
+    .catch(error => console.error("Error loading places:", error));
+  };
+
+  const debouncedLoadPlaces = debounce(loadPlaces, 500);
+
+  function showMarkerClusters() {
+    const markers = L.markerClusterGroup();
+    $mapMarkers.forEach(place => {
+      const { latitude, longitude, name, addresses } = place;
+      const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
+
+      const marker = L.marker([latitude, longitude])
+                      .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
+      markers.addLayer(marker);
+    });
+
+    map.addLayer(markers);
+  }
+
+  function showMarkers() {
+    $mapMarkers.forEach(place => {
+      const { latitude, longitude, name, addresses } = place;
+      const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
+
+      // Create a marker for each place
+      L.marker([latitude, longitude])
+        .addTo(map)
+        .bindPopup(markerDOM(name, mainAddress, latitude, longitude))
+        .openPopup();
+    });
+  }
+
+  map.on('moveend', debouncedLoadPlaces);
+  map.on('zoomend', debouncedLoadPlaces);
 
   document.getElementById('displayBoundsButton').addEventListener('click', function() {
     displayBounds(exampleBounds);
+  });
+
+  document.getElementById('displayMarkers').addEventListener('click', function() {
+    showMarkers();
+  });
+
+  document.getElementById('displayMarkerClusters').addEventListener('click', function() {
+    showMarkerClusters();
   });
 
   // Function to display the bounds on the map

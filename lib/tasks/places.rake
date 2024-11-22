@@ -30,6 +30,7 @@ namespace :places do
         brand: row['brand'],
         addresses: JSON.parse(row['addresses'] || '[]'),
         sources: JSON.parse(row['sources'] || '[]'),
+        geopoint: row['geometry'],
         longitude: row['longitude'],
         latitude: row['latitude'],
         created_at: Time.now,

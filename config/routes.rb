@@ -11,5 +11,6 @@ Rails.application.routes.draw do
 
   root "maps#index"
 
+  resources :places, only: [:index]
   resources :search_grids, only: [:index, :show]
 end
