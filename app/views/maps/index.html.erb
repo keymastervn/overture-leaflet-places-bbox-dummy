@@ -62,20 +62,20 @@
 
 <script>
   const map = L.map("map").setView([-33.907635, 150.921796], 11);
-  var $mapMarkers = [];
+  let $mapMarkers = [];
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
   }).addTo(map);
 
   function loadPlaces() {
-    const bounds = map.getBounds();
+    const center = map.getCenter();
+    const radius = 5000; // meters
 
     const params = new URLSearchParams({
-      sw_lat: bounds.getSouthWest().lat,
-      sw_lng: bounds.getSouthWest().lng,
-      ne_lat: bounds.getNorthEast().lat,
-      ne_lng: bounds.getNorthEast().lng
+      center_lat: center.lat,
+      center_lng: center.lng,
+      radius: radius
     });
 
     fetch(`/places?${params}`, {
