@@ -5,6 +5,16 @@ class SearchGrid < ApplicationRecord
 
   scope :with_place_type, ->(type) { where("'#{type}' = ANY (place_types)") }
 
+  STATUSES = [
+    PROCESSING = :processing,
+    FINISHED = :finished,
+    BECOMING_PARENT = :becoming_parent,
+    RETRYING = :retrying,
+    FAILED = :failed
+  ].freeze
+
+  enum status: { PROCESSING => 'processing', FINISHED => 'finished', BECOMING_PARENT => 'becoming_parent', RETRYING => 'retrying', FAILED => 'failed' }
+
   # Utility methods
   def bounds
     [

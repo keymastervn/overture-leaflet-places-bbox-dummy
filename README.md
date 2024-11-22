@@ -72,18 +72,6 @@ COPY(
 
 Note: Bouding boxes eval support from https://boundingbox.klokantech.com/
 
-## Import places
-
-```
-bundle exec rails places:import file=/Users/datle-eh/output.csv
-```
-
-```
-irb(main):001> Place.count
-  Place Count (41.8ms)  SELECT COUNT(*) FROM "places"
-=> 301762
-```
-
 ## Install POSTGIS
 
 https://postgis.net/workshops/postgis-intro/installation.html
@@ -96,5 +84,22 @@ IMPORTANT NOTE: when deploy production, be sure to use `postgis://` not `postgre
 DATABASE_URL=postgis://overture_test_db_user:******************@xxx.yyy-postgres.render.com/overture_test_db bundle exec rails places:import file=/Users/datle-eh/thinkei/ats/output.csv
 ```
 
+## Import
 
+### Places
 
+```
+$ bundle exec rails places:import file=/Users/datle-eh/output.csv
+```
+
+```
+irb(main):001> Place.count
+  Place Count (41.8ms)  SELECT COUNT(*) FROM "places"
+=> 301762
+```
+
+### Calculate Grids
+
+```
+$ bundle exec rake "places:build_grids[-25.05,153.65,-38.92,135.03,1]"
+```
