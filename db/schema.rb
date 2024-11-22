@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_21_111340) do
+ActiveRecord::Schema[7.1].define(version: 2024_11_22_164451) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
@@ -54,7 +54,15 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_21_111340) do
     t.string "hex_color"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status"
+    t.float "area_splitting_threshold"
+    t.uuid "parent_grid_id"
+    t.integer "place_results"
+    t.string "postcode"
+    t.index ["parent_grid_id"], name: "index_search_grids_on_parent_grid_id"
     t.index ["place_types"], name: "index_search_grids_on_place_types", using: :gin
+    t.index ["postcode"], name: "index_search_grids_on_postcode"
+    t.index ["status"], name: "index_search_grids_on_status"
   end
 
 end

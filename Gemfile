@@ -48,6 +48,7 @@ gem 'byebug'
 gem 'pry'
 
 gem 'activerecord-postgis-adapter', '>= 9.0'
+gem 'geocoder'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
