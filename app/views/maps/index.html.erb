@@ -57,7 +57,7 @@
       <div>
         <p><b>${name}</b></p>
         <p><b>${address}</b></p>
-        <p><b>${latitude},${longitude}</b></p>
+        <p><b>${latitude},${longitude}</b> <a href="https://www.google.com/maps/@${latitude},${longitude},16.51z" target="_blank" rel="noopener noreferrer">Open Google map</a></p>
       </div>
     `
   }
@@ -148,6 +148,10 @@
 
   map.on('moveend', debouncedLoadPlaces);
   map.on('zoomend', debouncedLoadPlaces);
+
+  window.addEventListener('load', function() {
+    debouncedLoadPlaces();
+  })
 
   document.getElementById('displayBoundsButton').addEventListener('click', function() {
     displayBounds(exampleBounds);

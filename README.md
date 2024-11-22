@@ -90,4 +90,11 @@ https://postgis.net/workshops/postgis-intro/installation.html
 
 https://stackoverflow.com/a/77204579
 
+IMPORTANT NOTE: when production deploy, be sure to use `postgis://` not `postgresql://` in your DATABASE_URL [Ref](https://github.com/rgeo/activerecord-postgis-adapter/issues/214#issuecomment-188858728)
+
+```
+DATABASE_URL=postgis://overture_test_db_user:******************@dpg-ct0asrd6l47c7388a65g-a.singapore-postgres.render.com/overture_test_db bundle exec rails places:import file=/Users/datle-eh/thinkei/ats/output2.csv
+```
+
+
 
