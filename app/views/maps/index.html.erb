@@ -38,6 +38,11 @@
   <button id="displayMarkers">✅ Display Markers</button>
 
   <button id="clearMarkers"> ❌ Clear all Markers</button>
+
+  <br />
+  <br />
+
+  <button id="displayGrids"> ✅ Display Grids</button>
 </div>
 <script>
   function debounce(func, wait) {
@@ -66,6 +71,9 @@
   const markerClusters = L.markerClusterGroup();
   let markers = [];
   const addedMarkerIds = new Set();
+  let gridLayers = [];
+  const addedGridLayers = new Set();
+
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     minZoom: 10,
@@ -97,6 +105,35 @@
     .then(data => {
       // Create a new marker cluster group
       $mapMarkers = data;
+    })
+    .catch(error => console.error("Error loading places:", error));
+  };
+
+  function loadGrids() {
+    const center = map.getCenter();
+    const zoomLevel = map.getZoom();
+    const maxRadius = 200000; // Maximum radius at lowest zoom
+    const minRadius = 500;   // Minimum radius at highest zoom
+
+    // Dynamic radius calculation
+    const radius = Math.max(minRadius, maxRadius / (2 ** (zoomLevel - 7)));
+
+    const params = new URLSearchParams({
+      center_lat: center.lat,
+      center_lng: center.lng,
+      radius: radius
+    });
+
+    fetch(`/search_grids?${params}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Create a new marker cluster group
+      showGrids(data);
     })
     .catch(error => console.error("Error loading places:", error));
   };
@@ -137,25 +174,63 @@
     });
   }
 
+  function showGrids(grids) {
+    // Loop through the grids and create a rectangle for each grid
+    grids.forEach(grid => {
+      if (!addedGridLayers.has(grid.id)) {
+        const bounds = [
+          [grid.sw_lat, grid.sw_lng],
+          [grid.ne_lat, grid.ne_lng]
+        ];
+
+        const rectangle = L.rectangle(bounds, {
+          color: grid.hex_color || "#3388ff",
+          weight: 2,
+          fillOpacity: 0.2
+        });
+
+        rectangle.bindPopup(`
+          <b>Grid ID:</b> ${grid.id}<br>
+          <b>Radius:</b> ${grid.radius} meters<br>
+          <b>Place Types:</b> ${grid.place_types || 'N/A'}
+          <b>Place Count:</b> ${grid.place_results}
+        `);
+
+        rectangle.addTo(map);
+
+        gridLayers.push(rectangle);
+        addedGridLayers.add(grid.id);
+      }
+    });
+  }
+
   function clearAllMarkers() {
     markerClusters.clearLayers();
     markers.forEach(marker => map.removeLayer(marker));
     addedMarkerIds.clear();
+    gridLayers = [];
+    addedGridLayers.clear();
   }
 
-  map.on('moveend', debouncedLoadPlaces);
-  map.on('zoomend', debouncedLoadPlaces);
+<%#   map.on('moveend', debouncedLoadPlaces);
+  map.on('zoomend', debouncedLoadPlaces); %>
 
   window.addEventListener('load', function() {
     debouncedLoadPlaces();
   })
 
   document.getElementById('displayMarkers').addEventListener('click', function() {
+    debouncedLoadPlaces();
     showMarkers();
   });
 
   document.getElementById('displayMarkerClusters').addEventListener('click', function() {
+    debouncedLoadPlaces();
     showMarkerClusters();
+  });
+
+  document.getElementById('displayGrids').addEventListener('click', function() {
+    loadGrids();
   });
 
   document.getElementById('clearMarkers').addEventListener('click', function() {

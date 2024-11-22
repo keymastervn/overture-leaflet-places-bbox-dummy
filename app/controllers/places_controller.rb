@@ -10,6 +10,7 @@ class PlacesController < ApplicationController
     center_point = "SRID=4326;POINT(#{center_lng} #{center_lat})"
 
     limit = Rails.env.local? ? 30000 : 10000
+
     @places = Place.where(
       "ST_DWithin(geopoint, ST_GeogFromText(?), ?)",
       center_point,
