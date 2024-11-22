@@ -13,7 +13,7 @@ class PlacesController < ApplicationController
       "ST_DWithin(geopoint, ST_GeogFromText(?), ?)",
       center_point,
       radius
-    ).limit(500)
+    ).limit(30000)
 
     # Render the places as JSON
     render json: @places.to_json(only: [:id, :name, :latitude, :longitude, :addresses])

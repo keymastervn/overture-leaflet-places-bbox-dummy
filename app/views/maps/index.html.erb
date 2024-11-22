@@ -76,7 +76,12 @@
 
   function loadPlaces() {
     const center = map.getCenter();
-    const radius = 5000; // meters
+    const zoomLevel = map.getZoom();
+    const maxRadius = 200000; // Maximum radius at lowest zoom
+    const minRadius = 500;   // Minimum radius at highest zoom
+
+    // Dynamic radius calculation
+    const radius = Math.max(minRadius, maxRadius / (2 ** (zoomLevel - 7)));
 
     const params = new URLSearchParams({
       center_lat: center.lat,
