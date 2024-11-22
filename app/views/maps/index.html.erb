@@ -37,7 +37,10 @@
 
   <button id="displayMarkerClusters">Display Marker Clusters</button>
 
-  <button id="displayMarkers">Display Markers</button>
+  <button id="displayMarkers">✅ Display Markers</button>
+  <br />
+  <br />
+  <button id="clearMarkers"> ❌ Clear all Markers</button>
 </div>
 <script>
   function debounce(func, wait) {
@@ -63,6 +66,9 @@
 <script>
   const map = L.map("map").setView([-33.907635, 150.921796], 11);
   let $mapMarkers = [];
+  const markerClusters = L.markerClusterGroup();
+  let markers = [];
+  const addedMarkerIds = new Set();
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -95,17 +101,20 @@
   const debouncedLoadPlaces = debounce(loadPlaces, 500);
 
   function showMarkerClusters() {
-    const markers = L.markerClusterGroup();
     $mapMarkers.forEach(place => {
       const { latitude, longitude, name, addresses } = place;
       const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
 
-      const marker = L.marker([latitude, longitude])
-                      .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
-      markers.addLayer(marker);
+      const markerId = `${latitude},${longitude}`; // prevent dup
+      if (!addedMarkerIds.has(markerId)) {
+        const marker = L.marker([latitude, longitude])
+                        .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
+        markerClusters.addLayer(marker);
+        addedMarkerIds.add(markerId);
+      };
     });
 
-    map.addLayer(markers);
+    map.addLayer(markerClusters);
   }
 
   function showMarkers() {
@@ -113,12 +122,23 @@
       const { latitude, longitude, name, addresses } = place;
       const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
 
-      // Create a marker for each place
-      L.marker([latitude, longitude])
-        .addTo(map)
-        .bindPopup(markerDOM(name, mainAddress, latitude, longitude))
-        .openPopup();
+      const markerId = `${latitude},${longitude}`; // prevent dup
+      if (!addedMarkerIds.has(markerId)) {
+        const marker = L.marker([latitude, longitude])
+          .bindPopup(markerDOM(name, mainAddress, latitude, longitude))
+          .openPopup();
+
+        marker.addTo(map);
+        markers.push(marker);
+        addedMarkerIds.add(markerId);
+      };
     });
+  }
+
+  function clearAllMarkers() {
+    markerClusters.clearLayers();
+    markers.forEach(marker => map.removeLayer(marker));
+    addedMarkerIds.clear();
   }
 
   map.on('moveend', debouncedLoadPlaces);
@@ -134,6 +154,10 @@
 
   document.getElementById('displayMarkerClusters').addEventListener('click', function() {
     showMarkerClusters();
+  });
+
+  document.getElementById('clearMarkers').addEventListener('click', function() {
+    clearAllMarkers();
   });
 
   // Function to display the bounds on the map
