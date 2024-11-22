@@ -33,13 +33,10 @@
 
 <div id="map" style="height: 100%; width: 100%; position: relative;"></div>
 <div id="actions" style="height: 200px; margin: 0; padding: 0;">
-  <button id="displayBoundsButton">Display Bounds</button>
-
   <button id="displayMarkerClusters">Display Marker Clusters</button>
 
   <button id="displayMarkers">✅ Display Markers</button>
-  <br />
-  <br />
+
   <button id="clearMarkers"> ❌ Clear all Markers</button>
 </div>
 <script>
@@ -64,14 +61,15 @@
 </script>
 
 <script>
-  const map = L.map("map").setView([-33.907635, 150.921796], 11);
+  const map = L.map("map").setView([-33.887117, 151.189334], 13); // Sydney, Anderson Stuart Building
   let $mapMarkers = [];
   const markerClusters = L.markerClusterGroup();
   let markers = [];
   const addedMarkerIds = new Set();
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
+    minZoom: 10,
+    maxZoom: 17,
   }).addTo(map);
 
   function loadPlaces() {
@@ -103,7 +101,7 @@
     .catch(error => console.error("Error loading places:", error));
   };
 
-  const debouncedLoadPlaces = debounce(loadPlaces, 500);
+  const debouncedLoadPlaces = debounce(loadPlaces, 1000);
 
   function showMarkerClusters() {
     $mapMarkers.forEach(place => {
@@ -130,8 +128,7 @@
       const markerId = `${latitude},${longitude}`; // prevent dup
       if (!addedMarkerIds.has(markerId)) {
         const marker = L.marker([latitude, longitude])
-          .bindPopup(markerDOM(name, mainAddress, latitude, longitude))
-          .openPopup();
+          .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
 
         marker.addTo(map);
         markers.push(marker);
@@ -153,10 +150,6 @@
     debouncedLoadPlaces();
   })
 
-  document.getElementById('displayBoundsButton').addEventListener('click', function() {
-    displayBounds(exampleBounds);
-  });
-
   document.getElementById('displayMarkers').addEventListener('click', function() {
     showMarkers();
   });
@@ -168,10 +161,4 @@
   document.getElementById('clearMarkers').addEventListener('click', function() {
     clearAllMarkers();
   });
-
-  // Function to display the bounds on the map
-  function displayBounds(bounds) {
-    // Fit the map view to the given bounds
-    map.fitBounds(bounds);
-  }
 </script>
