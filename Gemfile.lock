@@ -59,6 +59,9 @@ GEM
       activemodel (= 7.1.5)
       activesupport (= 7.1.5)
       timeout (>= 0.4.0)
+    activerecord-postgis-adapter (9.0.2)
+      activerecord (~> 7.1.0)
+      rgeo-activerecord (~> 7.0.0)
     activestorage (7.1.5)
       actionpack (= 7.1.5)
       activejob (= 7.1.5)
@@ -209,6 +212,10 @@ GEM
     reline (0.5.11)
       io-console (~> 0.5)
     rexml (3.3.9)
+    rgeo (3.0.1)
+    rgeo-activerecord (7.0.1)
+      activerecord (>= 5.0)
+      rgeo (>= 1.0.0)
     rubyzip (2.3.2)
     securerandom (0.3.2)
     selenium-webdriver (4.26.0)
@@ -253,6 +260,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  activerecord-postgis-adapter (>= 9.0)
   bootsnap
   byebug
   capybara
