@@ -56,7 +56,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_22_164451) do
     t.datetime "updated_at", null: false
     t.string "status"
     t.float "area_splitting_threshold"
-    t.uuid "parent_grid_id"
+    t.integer "parent_grid_id"
     t.integer "place_results"
     t.string "postcode"
     t.index ["parent_grid_id"], name: "index_search_grids_on_parent_grid_id"
