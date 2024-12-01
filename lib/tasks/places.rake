@@ -49,20 +49,21 @@ namespace :places do
     puts "Import completed!"
   end
 
-  task :build_grids, [:ne_lat, :ne_lng, :sw_lat, :sw_lng, :splitting_threshold] => :environment do |t, args|
+  task :build_grids, [:ne_lat, :ne_lng, :sw_lat, :sw_lng, :splitting_threshold, :category] => :environment do |t, args|
     ne_lat = args[:ne_lat].to_f
     ne_lng = args[:ne_lng].to_f
     sw_lat = args[:sw_lat].to_f
     sw_lng = args[:sw_lng].to_f
     splitting_threshold = args[:splitting_threshold].to_f
+    category = args[:category]
 
-    find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:)
+    find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:)
 
     puts "Build grids completed!"
   end
 end
 
-def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, max_places: 20, min_splitting_threshold: 0.15, parent_grid_id: nil)
+def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 16, min_splitting_threshold: 0.1, parent_grid_id: nil)
   grid = []
   lat = sw_lat
 
@@ -91,6 +92,7 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
       radius = Geocoder::Calculations.distance_between(southwest, northeast) / 2
 
       place_results = get_place_results(lng, lat, ne_corner[1], ne_corner[0])
+      # nearest_place = nearest_place(cp_lat, cp_lng) # comment out for perf
 
       grid = SearchGrid.create!(
         sw_lat: lat,
@@ -103,7 +105,9 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
         status: :finished,
         area_splitting_threshold: splitting_threshold,
         parent_grid_id:,
-        place_results:
+        place_results:,
+        place_types: google_category(category),
+        # postcode: nearest_place&.addresses[0]['postcode']
       )
 
       if place_results >= max_places && splitting_threshold > min_splitting_threshold
@@ -122,13 +126,53 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
   puts "Layer completed, splitting_threshold: #{splitting_threshold}"
 end
 
-def get_place_results(sw_lng, sw_lat, ne_lng, ne_lat)
-  # TODO: query with specific `place_types`
+def google_category(category)
+  return @google_categories if defined? @google_categories
 
-  count = Place.where(
-    "ST_MakeEnvelope(?, ?, ?, ?, 4326) && geopoint",
-    sw_lng, sw_lat, ne_lng, ne_lat
-  ).count
+  if category.blank?
+    @google_categories = []
+  else
+    @google_categories = Place::CATEGORY_MAPPING[category]['google']
+  end
+end
+
+def overture_category(category)
+  return @overture_category if defined? @overture_category
+
+  if category.blank?
+    @overture_category = []
+  else
+    @overture_category = Place::CATEGORY_MAPPING[category]['overture']
+  end
+end
+
+def get_place_results(sw_lng, sw_lat, ne_lng, ne_lat)
+  if overture_category(category).blank?
+    count = Place.where(
+      "ST_MakeEnvelope(?, ?, ?, ?, 4326) && geopoint",
+      sw_lng, sw_lat, ne_lng, ne_lat
+    ).count
+  else
+    count = Place.where(
+      "ST_MakeEnvelope(?, ?, ?, ?, 4326) && geopoint",
+      sw_lng, sw_lat, ne_lng, ne_lat
+    ).where(primary_categories: overture_category(category)).count
+  end
 
   count
 end
+
+def nearest_place(center_lat, center_lng)
+  sql = <<-SQL
+    SELECT *
+    FROM places
+    ORDER BY ST_Distance(
+      geopoint,
+      ST_SetSRID(ST_MakePoint(?, ?), 4326)
+    )
+    LIMIT 1;
+  SQL
+
+  Place.find_by_sql([sql, center_lng, center_lat]).first
+end
+
