@@ -72,6 +72,8 @@ COPY(
 
 Note: Bouding boxes eval support from https://boundingbox.klokantech.com/
 
+NSW => `135.03,-38.92,153.65,-25.05`
+
 ## Install POSTGIS
 
 https://postgis.net/workshops/postgis-intro/installation.html
@@ -100,6 +102,17 @@ irb(main):001> Place.count
 
 ### Calculate Grids
 
+eg. 1km shift (area_splitting_threshold)
+
 ```
 $ bundle exec rake "places:build_grids[-25.05,153.65,-38.92,135.03,1]"
+```
+
+### Update postcodes (Post-action)
+
+Note: pls enable index (center_lat, center_lng) + Place.geometry
+
+
+```
+$ bundle exec rake places:populate_postcodes
 ```

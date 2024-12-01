@@ -61,6 +61,31 @@ namespace :places do
 
     puts "Build grids completed!"
   end
+
+  task populate_postcodes: :environment do |_, args|
+    puts "Populate postcodes based on the nearest to center of inner places"
+
+    ActiveRecord::Base.connection.execute <<~SQL
+      WITH nearest_places AS (
+        SELECT
+          sg.id AS grid_id,
+          COALESCE(p.addresses->0->>'postcode', 'UNKNOWN') AS nearest_postcode
+        FROM search_grids sg
+        CROSS JOIN LATERAL (
+          SELECT p.addresses
+          FROM places p
+          ORDER BY p.geopoint <-> ST_SetSRID(ST_MakePoint(sg.center_lng, sg.center_lat), 4326)
+          LIMIT 1
+        ) AS p
+      )
+      UPDATE search_grids
+      SET postcode = np.nearest_postcode
+      FROM nearest_places np
+      WHERE search_grids.id = np.grid_id;
+    SQL
+
+    puts "Build grids completed!"
+  end
 end
 
 def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 16, min_splitting_threshold: 0.1, parent_grid_id: nil)
