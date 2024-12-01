@@ -10,12 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_11_22_164451) do
+ActiveRecord::Schema[7.1].define(version: 2024_12_01_133807) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
   enable_extension "plpgsql"
   enable_extension "postgis"
+  enable_extension "uuid-ossp"
 
   create_table "places", force: :cascade do |t|
     t.string "external_id", null: false
@@ -39,10 +40,11 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_22_164451) do
     t.index ["alternate_categories"], name: "index_places_on_alternate_categories", using: :gin
     t.index ["external_id"], name: "index_places_on_external_id", unique: true
     t.index ["geopoint"], name: "index_places_on_geopoint", using: :gist
+    t.index ["geopoint"], name: "places_geopoint_idx", using: :gist
     t.index ["primary_categories"], name: "index_places_on_primary_categories"
   end
 
-  create_table "search_grids", force: :cascade do |t|
+  create_table "search_grids", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.decimal "sw_lat", precision: 10, scale: 6, null: false
     t.decimal "sw_lng", precision: 10, scale: 6, null: false
     t.decimal "ne_lat", precision: 10, scale: 6, null: false
@@ -52,13 +54,14 @@ ActiveRecord::Schema[7.1].define(version: 2024_11_22_164451) do
     t.integer "radius", null: false
     t.string "place_types", default: [], array: true
     t.string "hex_color"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "status"
     t.float "area_splitting_threshold"
-    t.integer "parent_grid_id"
+    t.uuid "parent_grid_id"
     t.integer "place_results"
     t.string "postcode"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["center_lng", "center_lat"], name: "index_search_grids_on_center_lng_and_center_lat"
     t.index ["parent_grid_id"], name: "index_search_grids_on_parent_grid_id"
     t.index ["place_types"], name: "index_search_grids_on_place_types", using: :gin
     t.index ["postcode"], name: "index_search_grids_on_postcode"
