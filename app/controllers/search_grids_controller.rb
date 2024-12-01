@@ -11,14 +11,21 @@ class SearchGridsController < ApplicationController
     @search_grids = SearchGrid.where(
       "ST_DWithin(geography(ST_MakePoint(center_lng, center_lat)), geography(ST_MakePoint(?, ?)), ?)",
       center_lng, center_lat, radius
-    ).where(status: :finished).limit(200_000)
+    ).where(status: :finished).limit(100_000)
 
-    render json: @search_grids.as_json(only: [:id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :center_lat, :center_lng, :radius, :hex_color, :place_types, :place_results])
+    # @search_grids = SearchGrid.where(status: :finished)
+
+    render json: @search_grids.as_json(only: [
+      :id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :center_lat, :center_lng, :radius, :hex_color, :place_types, :place_results, :postcode
+    ])
   end
 
   # GET /search_grids/:id
   def show
     @search_grid = SearchGrid.find(params[:id])
-    render json: @search_grid.as_json(only: [:id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :center_lat, :center_lng, :radius, :hex_color, :place_types, :place_results])
+
+    render json: @search_grid.as_json(only: [
+      :id, :sw_lat, :sw_lng, :ne_lat, :ne_lng, :center_lat, :center_lng, :radius, :hex_color, :place_types, :place_results, :postcode
+    ])
   end
 end

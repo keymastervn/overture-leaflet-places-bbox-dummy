@@ -76,7 +76,7 @@
 
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    minZoom: 10,
+    minZoom: 4,
     maxZoom: 17,
   }).addTo(map);
 
@@ -192,8 +192,9 @@
         rectangle.bindPopup(`
           <b>Grid ID:</b> ${grid.id}<br>
           <b>Radius:</b> ${grid.radius} meters<br>
-          <b>Place Types:</b> ${grid.place_types || 'N/A'}
-          <b>Place Count:</b> ${grid.place_results}
+          <b>Place Types:</b> ${grid.place_types || 'N/A'}<br>
+          <b>Place Count:</b> ${grid.place_results}<br>
+          <b>Postcode:</b> ${grid.postcode}<br>
         `);
 
         rectangle.addTo(map);
