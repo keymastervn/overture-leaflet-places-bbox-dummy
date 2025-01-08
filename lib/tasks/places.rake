@@ -86,6 +86,34 @@ namespace :places do
 
     puts "Build grids completed!"
   end
+
+  task import_division: :environment do |_, args|
+    file_path = ENV['file']
+
+    unless File.exist?(file_path)
+      puts "Error: File not found at #{file_path}"
+      exit
+    end
+
+    batch_size = 1000
+    batch = []
+
+    puts "Starting import from #{file_path}..."
+
+    factory = RGeo::Geographic.spherical_factory(srid: 4326)
+
+    CSV.foreach(file_path, headers: true) do |row|
+      geometry = row['geometry']
+      subtype = row['subtype'] # expect country
+      division_type = row['type'] # expect division area
+      division_class = row['class'] # expect land
+      division_id = row['division_id']
+
+      import_divisions(factory, geometry, subtype, division_type, division_class, division_id)
+    end
+
+    puts "Import completed!"
+  end
 end
 
 def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 16, min_splitting_threshold: 0.1, parent_grid_id: nil)
@@ -199,5 +227,16 @@ def nearest_place(center_lat, center_lng)
   SQL
 
   Place.find_by_sql([sql, center_lng, center_lat]).first
+end
+
+def import_divisions(factory, geometry, subtype, division_type, division_class, division_id)
+  postgis_geometry = RGeo::WKRep::WKTParser.new(factory, support_ewkt: true).parse(geometry)
+  Division.create!(
+    subtype: subtype,
+    division_type: division_type,
+    division_class: division_class,
+    division_id: division_id,
+    geometries: postgis_geometry
+  )
 end
 
