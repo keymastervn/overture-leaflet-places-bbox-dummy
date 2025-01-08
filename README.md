@@ -143,6 +143,7 @@ Hint: always look at Example before querying
 https://docs.overturemaps.org/schema/reference/divisions/division_area/#examples
 
 #### Check
+
 Good grids within division.
 eg. 440460 -> 420592
 
@@ -155,3 +156,22 @@ query = <<~SQL
 SQL
 ActiveRecord::Base.connection.execute(query).to_a
 ```
+
+#### Mark
+Not because I do it manually, it is not necessary a rake task, once off is fine.
+
+```
+query = <<~SQL
+WITH grids_in_land AS (
+  SELECT g.id AS grid_id
+  FROM search_grids g
+  JOIN divisions d
+  ON ST_Contains(d.geometries::geometry, ST_MakeEnvelope(g.sw_lng, g.sw_lat, g.ne_lng, g.ne_lat, 4326))
+)
+UPDATE search_grids
+SET is_land = TRUE
+WHERE id IN (SELECT grid_id FROM grids_in_land);
+SQL
+ActiveRecord::Base.connection.execute(query).to_a
+```
+
