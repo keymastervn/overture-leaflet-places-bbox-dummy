@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_12_01_161413) do
+ActiveRecord::Schema[7.1].define(version: 2025_01_08_074428) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
@@ -72,6 +72,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_12_01_161413) do
     t.string "postcode"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_land"
     t.index ["center_lng", "center_lat"], name: "index_search_grids_on_center_lng_and_center_lat"
     t.index ["parent_grid_id"], name: "index_search_grids_on_parent_grid_id"
     t.index ["place_types"], name: "index_search_grids_on_place_types", using: :gin
