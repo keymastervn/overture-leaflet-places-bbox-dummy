@@ -141,3 +141,17 @@ $ file=./division_au.csv bundle exec rake places:import_division
 
 Hint: always look at Example before querying
 https://docs.overturemaps.org/schema/reference/divisions/division_area/#examples
+
+#### Check
+Good grids within division.
+eg. 440460 -> 420592
+
+```
+query = <<~SQL
+  SELECT count(g.id)
+  FROM search_grids g
+  JOIN divisions d
+  ON ST_Contains(d.geometries::geometry, ST_MakeEnvelope(g.sw_lng, g.sw_lat, g.ne_lng, g.ne_lat, 4326));
+SQL
+ActiveRecord::Base.connection.execute(query).to_a
+```
