@@ -10,13 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_12_01_133807) do
+ActiveRecord::Schema[7.1].define(version: 2024_12_01_161413) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "cube"
   enable_extension "earthdistance"
   enable_extension "plpgsql"
   enable_extension "postgis"
   enable_extension "uuid-ossp"
+
+  create_table "divisions", force: :cascade do |t|
+    t.string "subtype", null: false
+    t.string "division_type", null: false
+    t.string "division_class", null: false
+    t.string "division_id"
+    t.geography "geometries", limit: {:srid=>4326, :type=>"geometry", :geographic=>true}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["geometries"], name: "index_divisions_on_geometries", using: :gist
+  end
 
   create_table "places", force: :cascade do |t|
     t.string "external_id", null: false
