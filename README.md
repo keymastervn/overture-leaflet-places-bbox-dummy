@@ -105,7 +105,7 @@ irb(main):001> Place.count
 eg. 1km shift (area_splitting_threshold)
 
 ```
-$ bundle exec rake "places:build_grids[-25.05,153.65,-38.92,135.03,1]"
+$ bundle exec rake "places:build_grids[-`25.05,153.65,-38.92,135.03,1]"
 ```
 
 ### Update postcodes (Post-action)
@@ -116,3 +116,28 @@ Note: pls enable index (center_lat, center_lng) + Place.geometry
 ```
 $ bundle exec rake places:populate_postcodes
 ```
+
+### Divisions
+https://docs.overturemaps.org/guides/divisions/
+
+https://docs.overturemaps.org/schema/reference/divisions/division_boundary/
+
+Many grids are miscreated at the ocean because of the way we spawn them.
+
+Creating a division with multiple ![LineString](https://postgis.net/docs/ST_MakeLine.html) can help checking if SearchGrid is within the division or not.
+
+```
+COPY (
+SELECT *
+FROM read_parquet('s3://overturemaps-us-west-2/release/2024-11-13.0/theme=divisions/type=division_area/*', filename=true, hive_partitioning=1)
+WHERE
+subtype = 'country' AND class = 'land' AND country = 'AU'
+) TO 'division_au.csv' (HEADER, DELIMITER ',');
+```
+
+```
+$ file=./division_au.csv bundle exec rake places:import_division
+```
+
+Hint: always look at Example before querying
+https://docs.overturemaps.org/schema/reference/divisions/division_area/#examples
