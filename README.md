@@ -73,6 +73,7 @@ COPY(
 Note: Bouding boxes eval support from https://boundingbox.klokantech.com/
 
 NSW => `135.03,-38.92,153.65,-25.05`
+AU => `-10.41,153.64,-43.65,112.91`
 
 ## Install POSTGIS
 
@@ -105,7 +106,7 @@ irb(main):001> Place.count
 eg. 1km shift (area_splitting_threshold)
 
 ```
-$ bundle exec rake "places:build_grids[-`25.05,153.65,-38.92,135.03,1]"
+$ bundle exec rake "places:build_grids[-25.05,153.65,-38.92,135.03,1]"
 ```
 
 ### Update postcodes (Post-action)
@@ -173,5 +174,9 @@ SET is_land = TRUE
 WHERE id IN (SELECT grid_id FROM grids_in_land);
 SQL
 ActiveRecord::Base.connection.execute(query).to_a
+
+irb(main):036> SearchGrid.where(is_land: true).count
+  SearchGrid Count (77.4ms)  SELECT COUNT(*) FROM "search_grids" WHERE "search_grids"."is_land" = $1  [["is_land", true]]
+=> 420592
 ```
 

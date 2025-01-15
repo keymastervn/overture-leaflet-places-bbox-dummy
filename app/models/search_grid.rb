@@ -32,6 +32,20 @@ class SearchGrid < ApplicationRecord
     self.hex_color = generate_random_hex_color if hex_color.blank?
   end
 
+  def within_division?(division)
+    factory = RGeo::Geographic.spherical_factory(srid: 4326)
+
+    grid_polygon = factory.polygon(factory.linear_ring([
+      factory.point(sw_lng, sw_lat),
+      factory.point(ne_lng, sw_lat),
+      factory.point(ne_lng, ne_lat),
+      factory.point(sw_lng, ne_lat),
+      factory.point(sw_lng, sw_lat) # Close the polygon
+    ]))
+
+    division.geometries.contains?(grid_polygon)
+  end
+
   private
 
   def generate_random_hex_color

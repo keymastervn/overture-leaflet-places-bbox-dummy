@@ -74,6 +74,7 @@ namespace :places do
         CROSS JOIN LATERAL (
           SELECT p.addresses
           FROM places p
+          WHERE p.addresses->0->>'postcode' IS NOT NULL
           ORDER BY p.geopoint <-> ST_SetSRID(ST_MakePoint(sg.center_lng, sg.center_lat), 4326)
           LIMIT 1
         ) AS p
@@ -114,15 +115,60 @@ namespace :places do
 
     puts "Import completed!"
   end
+
+  desc 'Export SearchUnit data to CSV'
+  task export_search_unit: :environment do
+    require 'csv'
+
+    file_path = Rails.root.join('search_units.csv')
+
+    CSV.open(file_path, 'wb') do |csv|
+      # Write the header row
+      csv << [
+        'country_code',
+        'postcode',
+        'ne_lat',
+        'ne_lng',
+        'sw_lat',
+        'sw_lng',
+        'cp_lat',
+        'cp_lng',
+        'radius',
+        'area_splitting_threshold',
+        'place_types'
+      ]
+
+      # Query and write data rows
+      # SearchUnit.find_each do |unit|
+      SearchGrid.where.not(postcode: excluded_postcodes)
+                .where(status: :finished, is_land: true).find_each do |unit|
+        csv << [
+          'AU',
+          unit.postcode,
+          unit.ne_lat,
+          unit.ne_lng,
+          unit.sw_lat,
+          unit.sw_lng,
+          unit.center_lat,
+          unit.center_lng,
+          unit.radius,
+          unit.area_splitting_threshold,
+          "#{unit.place_types.join(',')}"
+        ]
+      end
+    end
+
+    puts "Exported to #{file_path}"
+  end
 end
 
-def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 16, min_splitting_threshold: 0.1, parent_grid_id: nil)
+def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 12, min_splitting_threshold: 0.1, parent_grid_id: nil)
   grid = []
   lat = sw_lat
 
-  while lat < ne_lat
+  while lat < ne_lat - 0.0003
     lng = sw_lng
-    while lng < ne_lng
+    while lng < ne_lng - 0.0003
       # Southwest corner of the square
       sw_corner = [lat, lng]
 
@@ -134,27 +180,27 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
       )
 
       # Ensure the northeast corner is within the area bounds
-      ne_corner[0] = ne_lat if ne_corner[0] > ne_lat
-      ne_corner[1] = ne_lng if ne_corner[1] > ne_lng
+      ne_corner[0] = ne_lat if ne_corner[0] >= ne_lat - 0.0003
+      ne_corner[1] = ne_lng if ne_corner[1] >= ne_lng - 0.0003
 
       # Add the square's corners to the grid
       southwest = sw_corner
       northeast = ne_corner
 
       cp_lat, cp_lng = Geocoder::Calculations.geographic_center([southwest, northeast])
-      radius = Geocoder::Calculations.distance_between(southwest, northeast) / 2
+      radius = ((Geocoder::Calculations.distance_between(southwest, northeast) / 2) * 1000).round(2) # meters
 
-      place_results = get_place_results(lng, lat, ne_corner[1], ne_corner[0])
+      place_results = get_place_results(lng, lat, ne_corner[1], ne_corner[0], category)
       # nearest_place = nearest_place(cp_lat, cp_lng) # comment out for perf
 
       grid = SearchGrid.create!(
-        sw_lat: lat,
-        sw_lng: lng,
+        sw_lat: sw_corner[0],
+        sw_lng: sw_corner[1],
         ne_lat: ne_corner[0],
         ne_lng: ne_corner[1],
         center_lat: cp_lat,
         center_lng: cp_lng,
-        radius: radius * 1000, # to meters
+        radius:,
         status: :finished,
         area_splitting_threshold: splitting_threshold,
         parent_grid_id:,
@@ -165,7 +211,7 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
 
       if place_results >= max_places && splitting_threshold > min_splitting_threshold
         grid.becoming_parent!
-        find_reasonable_grids(ne_lat: ne_corner[0], ne_lng: ne_corner[1], sw_lat: lat, sw_lng: lng, splitting_threshold: splitting_threshold / 2, parent_grid_id: grid.id)
+        find_reasonable_grids(ne_lat: ne_corner[0], ne_lng: ne_corner[1], sw_lat: sw_corner[0], sw_lng: sw_corner[1], category:, splitting_threshold: splitting_threshold / 2, parent_grid_id: grid.id)
       end
 
       # Move to the next square in the east direction
@@ -180,26 +226,34 @@ def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshol
 end
 
 def google_category(category)
-  return @google_categories if defined? @google_categories
+  @google_categories ||= {}
+
+  return @google_categories[category] unless @google_categories[category].nil?
 
   if category.blank?
-    @google_categories = []
+    @google_categories[category] = []
   else
-    @google_categories = Place::CATEGORY_MAPPING[category]['google']
+    @google_categories[category] = Place::CATEGORY_MAPPING[category]['google']
   end
+
+  @google_categories[category]
 end
 
 def overture_category(category)
-  return @overture_category if defined? @overture_category
+  @overture_category ||= {}
+
+  return @overture_category[category] unless @overture_category[category].nil?
 
   if category.blank?
-    @overture_category = []
+    @overture_category[category] = []
   else
-    @overture_category = Place::CATEGORY_MAPPING[category]['overture']
+    @overture_category[category] = Place::CATEGORY_MAPPING[category]['overture']
   end
+
+  @overture_category[category]
 end
 
-def get_place_results(sw_lng, sw_lat, ne_lng, ne_lat)
+def get_place_results(sw_lng, sw_lat, ne_lng, ne_lat, category)
   if overture_category(category).blank?
     count = Place.where(
       "ST_MakeEnvelope(?, ?, ?, ?, 4326) && geopoint",
@@ -239,4 +293,3 @@ def import_divisions(factory, geometry, subtype, division_type, division_class, 
     geometries: postgis_geometry
   )
 end
-
