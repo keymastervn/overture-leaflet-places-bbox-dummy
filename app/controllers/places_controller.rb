@@ -18,6 +18,6 @@ class PlacesController < ApplicationController
     ).limit(limit)
 
     # Render the places as JSON
-    render json: @places.to_json(only: [:id, :name, :latitude, :longitude, :addresses])
+    render json: @places.to_json(only: [:id, :name, :latitude, :longitude, :addresses, :primary_categories])
   end
 end
