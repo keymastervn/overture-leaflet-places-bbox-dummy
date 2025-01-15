@@ -54,11 +54,13 @@
     };
   }
 
-  function markerDOM(name, address, latitude, longitude) {
+  function markerDOM(id, name, address, primary_categories, latitude, longitude) {
     return `
       <div>
+        <p>id:${id}</p>
         <p><b>${name}</b></p>
         <p><b>${address}</b></p>
+        <p><b>${primary_categories}</b></p>
         <p><b>${latitude},${longitude}</b> <a href="https://www.google.com/maps/@${latitude},${longitude},16.51z" target="_blank" rel="noopener noreferrer">Open Google map</a></p>
       </div>
     `
@@ -142,13 +144,13 @@
 
   function showMarkerClusters() {
     $mapMarkers.forEach(place => {
-      const { latitude, longitude, name, addresses } = place;
+      const { id, latitude, longitude, name, addresses, primary_categories } = place;
       const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
 
       const markerId = `${latitude},${longitude}`; // prevent dup
       if (!addedMarkerIds.has(markerId)) {
         const marker = L.marker([latitude, longitude])
-                        .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
+                        .bindPopup(markerDOM(id, name, mainAddress, primary_categories, latitude, longitude));
         markerClusters.addLayer(marker);
         addedMarkerIds.add(markerId);
       };

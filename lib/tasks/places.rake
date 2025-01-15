@@ -162,7 +162,7 @@ namespace :places do
   end
 end
 
-def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 12, min_splitting_threshold: 0.1, parent_grid_id: nil)
+def find_reasonable_grids(ne_lat:, ne_lng:, sw_lat:, sw_lng:, splitting_threshold:, category:, max_places: 8, min_splitting_threshold: 0.1, parent_grid_id: nil)
   grid = []
   lat = sw_lat
 

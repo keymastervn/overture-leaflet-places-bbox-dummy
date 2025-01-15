@@ -64,6 +64,7 @@ class Place < ApplicationRecord
       ],
       'overture' => %w[beauty_and_spa]
     },
+    # https://chatgpt.com/share/67878e3c-898c-800f-923e-4fb09b69b3a1
     'Food and Drink' => {
       'google' => %w[
         american_restaurant
@@ -108,6 +109,39 @@ class Place < ApplicationRecord
       ],
       'overture' => %w[
         eat_and_drink
+        american_restaurant
+        brazilian_restaurant
+        bar
+        barbecue_restaurant
+        breakfast_and_brunch_restaurant
+        cafe
+        chinese_restaurant
+        coffee_shop
+        fast_food_restaurant
+        french_restaurant
+        greek_restaurant
+        hamburger_restaurant
+        indian_restaurant
+        indonesian_restaurant
+        italian_restaurant
+        japanese_restaurant
+        korean_restaurant
+        lebanese_restaurant
+        mediterranean_restaurant
+        mexican_restaurant
+        middle_eastern_restaurant
+        pizza_restaurant
+        restaurant
+        sandwich_shop
+        seafood_restaurant
+        spanish_restaurant
+        steakhouse
+        sushi_restaurant
+        thai_restaurant
+        turkish_restaurant
+        vegan_restaurant
+        vegetarian_restaurant
+        vietnamese_restaurant
       ]
     },
     'Shopping' => {
@@ -139,6 +173,30 @@ class Place < ApplicationRecord
       ],
       'overture' => %w[
         retail
+        bicycle_shop
+        bookstore
+        mobile_phone_store
+        clothing_store
+        convenience_store
+        department_store
+        discount_store
+        electronics
+        furniture_store
+        gift_shop
+        grocery_store
+        hardware_store
+        home_goods_store
+        home_improvement_store
+        jewelry_store
+        liquor_store
+        farmers_market
+        public_market
+        pet_store
+        shoe_store
+        shopping_center
+        sporting_goods
+        supermarket
+        wholesale_store
       ]
     }
   }.freeze
