@@ -11,7 +11,7 @@ class SearchGridsController < ApplicationController
     @search_grids = SearchGrid.where(
       "ST_DWithin(geography(ST_MakePoint(center_lng, center_lat)), geography(ST_MakePoint(?, ?)), ?)",
       center_lng, center_lat, radius
-    ).where(status: :finished, is_land: true).limit(100_000)
+    ).where(status: :finished).limit(100_000)
 
     # @search_grids = SearchGrid.where(status: :finished)
 
