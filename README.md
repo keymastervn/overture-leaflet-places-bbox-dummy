@@ -60,7 +60,8 @@ COPY(
        CAST(addresses AS JSON) AS addresses,
        CAST(sources AS JSON) AS sources,
        CAST(SPLIT_PART(REPLACE(REPLACE(geometry, 'POINT (', ''), ')', ''), ' ', 1) AS DOUBLE) AS longitude,
-       CAST(SPLIT_PART(REPLACE(REPLACE(geometry, 'POINT (', ''), ')', ''), ' ', 2) AS DOUBLE) AS latitude
+       CAST(SPLIT_PART(REPLACE(REPLACE(geometry, 'POINT (', ''), ')', ''), ' ', 2) AS DOUBLE) AS latitude,
+       geometry
     FROM read_parquet('s3://overturemaps-us-west-2/release/2024-10-23.0/theme=places/*/*')
     WHERE bbox.xmin > 135.03 AND bbox.xmax < 153.65
     AND bbox.ymin > -38.92 AND bbox.ymax < -25.05
@@ -179,4 +180,3 @@ irb(main):036> SearchGrid.where(is_land: true).count
   SearchGrid Count (77.4ms)  SELECT COUNT(*) FROM "search_grids" WHERE "search_grids"."is_land" = $1  [["is_land", true]]
 => 420592
 ```
-

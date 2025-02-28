@@ -106,6 +106,33 @@ class Place < ApplicationRecord
         vegan_restaurant
         vegetarian_restaurant
         vietnamese_restaurant
+        acai_shop
+        afghani_restaurant
+        african_restaurant
+        asian_restaurant
+        bagel_shop
+        bar_and_grill
+        buffet_restaurant
+        cafeteria
+        candy_store
+        cat_cafe
+        chocolate_factory
+        chocolate_shop
+        confectionery
+        deli
+        dessert_restaurant
+        dessert_shop
+        diner
+        dog_cafe
+        donut_shop
+        fine_dining_restaurant
+        food_court
+        juice_shop
+        korean_restaurant
+        pub
+        tea_house
+        wine_bar
+        sandwich_shop
       ],
       'overture' => %w[
         eat_and_drink
@@ -170,6 +197,11 @@ class Place < ApplicationRecord
         store
         supermarket
         wholesaler
+        asian_grocery_store
+        butcher_shop
+        food_store
+        warehouse_store
+        auto_parts_store
       ],
       'overture' => %w[
         retail
