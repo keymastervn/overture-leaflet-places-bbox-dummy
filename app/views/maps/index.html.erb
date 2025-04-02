@@ -46,22 +46,38 @@
   <br />
   <br />
 
-  <label for="grid-radius">Radius:</label>
+  <label for="pinRadius">Radius:</label>
   <input
     type="text"
-    id="grid-radius"
-    name="grid-radius"/>
+    id="pinRadius"
+    name="pinRadius"
+    value="3000"/>
 
-  <button id="displayGrids">Drop the pin 📌</button>
+  <button id="dropPin">Drop the pin 📌</button>
 
 </div>
+<div id="pin-placement-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.2); z-index: 1001; pointer-events: none;">
+  <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+    <h4>Click on the map to place your pin</h4>
+    <button id="cancel-pin-placement" style="display: block; margin: 10px auto; padding: 5px 10px;">Cancel</button>
+  </div>
+</div>
 <script>
-  function debounce(func, wait) {
+  function debouncePromise(func, wait) {
     let timeout;
     return function(...args) {
       const context = this;
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(context, args), wait);
+      return new Promise((resolve) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          const result = func.apply(context, args);
+          if (result instanceof Promise) {
+            result.then(resolve);
+          } else {
+            resolve(result);
+          }
+        }, wait);
+      });
     };
   }
 
@@ -85,7 +101,7 @@
     TORONTO_OF_MANCHESTER: [43.5852081, -79.5613104],
   }
 
-  const map = L.map("map").setView(STARTING_POINT.TORONTO_OF_MANCHESTER, 13);
+  const map = L.map("map").setView(STARTING_POINT.SYDNEY_ANDERSON_STUART_BUILDING, 13);
 
   let $mapMarkers = [];
   const markerClusters = L.markerClusterGroup();
@@ -93,7 +109,12 @@
   const addedMarkerIds = new Set();
   let gridLayers = [];
   const addedGridLayers = new Set();
-
+  let pinMarker = null;
+  let radiusCircle = null;
+  let isPinPlacementMode = false;
+  let pinRadius = 3000; // Variable to store the pinRadius value
+  let pinLat = null;
+  let pinLng = null;
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     minZoom: 4,
@@ -101,21 +122,13 @@
   }).addTo(map);
 
   function loadPlaces() {
-    const center = map.getCenter();
-    const zoomLevel = map.getZoom();
-    const maxRadius = 200000; // Maximum radius at lowest zoom
-    const minRadius = 500;   // Minimum radius at highest zoom
-
-    // Dynamic radius calculation
-    const radius = Math.max(minRadius, maxRadius / (2 ** (zoomLevel - 7)));
-
     const params = new URLSearchParams({
-      center_lat: center.lat,
-      center_lng: center.lng,
-      radius: radius
+      center_lat: pinLat,
+      center_lng: pinLng,
+      radius: pinRadius
     });
 
-    fetch(`/places?${params}`, {
+    return fetch(`/places?${params}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
@@ -125,23 +138,21 @@
     .then(data => {
       // Create a new marker cluster group
       $mapMarkers = data;
+      return data;
     })
-    .catch(error => console.error("Error loading places:", error));
+    .catch(error => {
+      console.error("Error loading places:", error)
+      return [];
+    });
   };
 
+  const debouncedLoadPlaces = debouncePromise(loadPlaces, 1000);
+
   function loadGrids() {
-    const center = map.getCenter();
-    const zoomLevel = map.getZoom();
-    const maxRadius = 200000; // Maximum radius at lowest zoom
-    const minRadius = 500;   // Minimum radius at highest zoom
-
-    // Dynamic radius calculation
-    const radius = Math.max(minRadius, maxRadius / (2 ** (zoomLevel - 7)));
-
     const params = new URLSearchParams({
-      center_lat: center.lat,
-      center_lng: center.lng,
-      radius: radius
+      center_lat: pinLat,
+      center_lng: pinLng,
+      radius: pinRadius
     });
 
     fetch(`/search_grids?${params}`, {
@@ -157,8 +168,6 @@
     })
     .catch(error => console.error("Error loading places:", error));
   };
-
-  const debouncedLoadPlaces = debounce(loadPlaces, 1000);
 
   function showMarkerClusters() {
     $mapMarkers.forEach(place => {
@@ -232,6 +241,154 @@
     addedMarkerIds.clear();
     gridLayers = [];
     addedGridLayers.clear();
+
+    // Also clear the pin and circle
+    if (pinMarker) {
+      map.removeLayer(pinMarker);
+      pinMarker = null;
+    }
+    if (radiusCircle) {
+      map.removeLayer(radiusCircle);
+      radiusCircle = null;
+    }
+  }
+
+  function enablePinPlacementMode() {
+    isPinPlacementMode = true;
+
+    // Update the grid radius from the input field
+    pinRadius = parseInt(document.getElementById('pinRadius').value, 10) || 3000;
+
+    // Show the overlay
+    document.getElementById('pin-placement-overlay').style.display = 'block';
+    // Change pointer-events to 'none' so clicks pass through to the map
+    document.getElementById('pin-placement-overlay').style.pointerEvents = 'none';
+
+    // Make sure the cancel button is still clickable
+    document.getElementById('cancel-pin-placement').style.pointerEvents = 'auto';
+
+    // Disable all buttons except "Cancel"
+    const buttons = document.querySelectorAll('#actions button');
+    buttons.forEach(button => {
+      if (button.id !== 'cancel-pin-placement') {
+        button.disabled = true;
+      }
+    });
+
+    // Set the cursor to crosshair to indicate placement mode
+    document.getElementById('map').style.cursor = 'crosshair';
+
+    // Add temporary click event listener to map
+    map.once('click', function(e) {
+      createPinAtLocation(e.latlng.lat, e.latlng.lng);
+      disablePinPlacementMode();
+    });
+  }
+
+  function disablePinPlacementMode() {
+    isPinPlacementMode = false;
+
+    // Hide the overlay
+    document.getElementById('pin-placement-overlay').style.display = 'none';
+    document.getElementById('pin-placement-overlay').style.pointerEvents = 'none';
+
+    // Re-enable all buttons
+    const buttons = document.querySelectorAll('#actions button');
+    buttons.forEach(button => {
+      button.disabled = false;
+    });
+
+    // Reset cursor
+    document.getElementById('map').style.cursor = '';
+  }
+
+  function createPinAtLocation(lat, lng) {
+    // Remove existing pin and circle if any
+    if (pinMarker) {
+      map.removeLayer(pinMarker);
+    }
+    if (radiusCircle) {
+      map.removeLayer(radiusCircle);
+    }
+
+    // Create a new pin marker
+    pinMarker = L.marker([lat, lng], { draggable: true })
+      .bindPopup(`
+        <div>
+          <p><b>Center Point</b></p>
+          <p><b>${lat}, ${lng}</b></p>
+          <p><b>Radius: ${pinRadius} meters</b></p>
+        </div>
+      `)
+      .addTo(map);
+
+    updatePinPopup();
+
+    // Create a circle with 50% opacity
+    radiusCircle = L.circle([lat, lng], {
+      radius: pinRadius,
+      color: '#3388ff',
+      fillColor: '#3388ff',
+      fillOpacity: 0.2,
+      weight: 2,
+      dashArray: '5, 10'  // Creates dotted line
+    }).addTo(map);
+
+    // Add drag event handlers
+    pinMarker.on('drag', updateCirclePosition);
+    pinMarker.on('dragend', updatePinPopup);
+  }
+
+  function updateCirclePosition(e) {
+    const marker = e.target;
+    const position = marker.getLatLng();
+
+    // Move the circle to match the marker's position
+    if (radiusCircle) {
+      radiusCircle.setLatLng(position);
+    }
+  }
+
+  function updatePinPopup() {
+    if (pinMarker) {
+      const position = pinMarker.getLatLng();
+      pinLat = position.lat;
+      pinLng = position.lng;
+
+      pinMarker.bindPopup(`
+        <div>
+          <p><b>Center Point</b></p>
+          <p><b>${position.lat.toFixed(8)}, ${position.lng.toFixed(8)}</b></p>
+          <p><b>Radius: ${pinRadius} meters</b></p>
+        </div>
+      `);
+    }
+  }
+
+  function updateRadiusCircle() {
+    if (pinMarker && radiusCircle) {
+      // Get the current radius value
+      const newRadius = parseInt(document.getElementById('pinRadius').value, 10) || 3000;
+
+      // Remove the existing circle
+      map.removeLayer(radiusCircle);
+
+      // Get the current pin position
+      const latLng = pinMarker.getLatLng();
+
+      // Create a new circle with the updated radius
+      radiusCircle = L.circle(latLng, {
+        radius: newRadius,
+        color: '#3388ff',
+        fillColor: '#3388ff',
+        fillOpacity: 0.2,
+        weight: 2,
+        dashArray: '5, 10'  // Creates dotted line
+      }).addTo(map);
+
+      // Update the popup content to show the new radius
+      updatePinPopup();
+    }
   }
 
 <%#   map.on('moveend', debouncedLoadPlaces);
@@ -239,16 +396,20 @@
 
   window.addEventListener('load', function() {
     debouncedLoadPlaces();
+    // Initialize pinRadius from the input value on page load
+    pinRadius = parseInt(document.getElementById('pinRadius').value, 10) || 3000;
   })
 
   document.getElementById('displayMarkers').addEventListener('click', function() {
-    debouncedLoadPlaces();
-    showMarkers();
+    debouncedLoadPlaces().then(() => {
+      showMarkers();
+    });
   });
 
   document.getElementById('displayMarkerClusters').addEventListener('click', function() {
-    debouncedLoadPlaces();
-    showMarkerClusters();
+    debouncedLoadPlaces().then(() => {
+      showMarkerClusters();
+    });
   });
 
   document.getElementById('displayGrids').addEventListener('click', function() {
@@ -257,5 +418,20 @@
 
   document.getElementById('clearMarkers').addEventListener('click', function() {
     clearAllMarkers();
+  });
+
+  document.getElementById('dropPin').addEventListener('click', function() {
+    enablePinPlacementMode();
+  });
+
+  document.getElementById('cancel-pin-placement').addEventListener('click', function(e) {
+    e.stopPropagation();
+    disablePinPlacementMode();
+  });
+
+  // Update pinRadius when the input value changes
+  document.getElementById('pinRadius').addEventListener('input', function() {
+    pinRadius = parseInt(this.value, 10) || 3000;
+    updateRadiusCircle();
   });
 </script>
