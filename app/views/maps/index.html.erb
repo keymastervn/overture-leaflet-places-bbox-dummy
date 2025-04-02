@@ -43,6 +43,17 @@
   <br />
 
   <button id="displayGrids"> ✅ Display Grids</button>
+  <br />
+  <br />
+
+  <label for="grid-radius">Radius:</label>
+  <input
+    type="text"
+    id="grid-radius"
+    name="grid-radius"/>
+
+  <button id="displayGrids">Drop the pin 📌</button>
+
 </div>
 <script>
   function debounce(func, wait) {
@@ -60,7 +71,7 @@
         <p>id:${id}</p>
         <p><b>${name}</b></p>
         <p><b>${address}</b></p>
-        <p><b>${primary_categories}</b></p>
+        <p style="text-wrap: wrap;"><b>${primary_categories}</b></p>
         <p><b>${latitude},${longitude}</b> <a href="https://www.google.com/maps/@${latitude},${longitude},16.51z" target="_blank" rel="noopener noreferrer">Open Google map</a></p>
       </div>
     `
@@ -71,9 +82,10 @@
   const STARTING_POINT = {
     SYDNEY_ANDERSON_STUART_BUILDING: [-33.887117, 151.189334],
     CENTER_OF_MANCHESTER: [53.48012918863774, -2.2673463821411137],
+    TORONTO_OF_MANCHESTER: [43.5852081, -79.5613104],
   }
 
-  const map = L.map("map").setView(STARTING_POINT.CENTER_OF_MANCHESTER, 13);
+  const map = L.map("map").setView(STARTING_POINT.TORONTO_OF_MANCHESTER, 13);
 
   let $mapMarkers = [];
   const markerClusters = L.markerClusterGroup();
@@ -194,15 +206,16 @@
         const rectangle = L.rectangle(bounds, {
           color: grid.hex_color || "#3388ff",
           weight: 2,
-          fillOpacity: 0.2
         });
 
         rectangle.bindPopup(`
-          <b>Grid ID:</b> ${grid.id}<br>
-          <b>Radius:</b> ${grid.radius} meters<br>
-          <b>Place Types:</b> ${grid.place_types || 'N/A'}<br>
-          <b>Place Count:</b> ${grid.place_results}<br>
-          <b>Postcode:</b> ${grid.postcode}<br>
+          <div style="opacity: 0.88; word-wrap: break-word;">
+            <b>Grid ID:</b> ${grid.id}<br>
+            <b>Radius:</b> ${grid.radius} meters<br>
+            <b>Place Types:</b>${grid.place_types || 'N/A'}</span><br>
+            <b>Place Count:</b> ${grid.place_results}<br>
+            <b>Postcode:</b> ${grid.postcode}<br>
+          </div>
         `);
 
         rectangle.addTo(map);
