@@ -68,7 +68,13 @@
 </script>
 
 <script>
-  const map = L.map("map").setView([-33.887117, 151.189334], 13); // Sydney, Anderson Stuart Building
+  const STARTING_POINT = {
+    SYDNEY_ANDERSON_STUART_BUILDING: [-33.887117, 151.189334],
+    CENTER_OF_MANCHESTER: [53.48012918863774, -2.2673463821411137],
+  }
+
+  const map = L.map("map").setView(STARTING_POINT.CENTER_OF_MANCHESTER, 13);
+
   let $mapMarkers = [];
   const markerClusters = L.markerClusterGroup();
   let markers = [];

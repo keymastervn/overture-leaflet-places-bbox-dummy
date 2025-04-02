@@ -117,8 +117,14 @@ namespace :places do
   end
 
   desc 'Export SearchUnit data to CSV'
-  task export_search_unit: :environment do
+  task :export_search_unit, [:country_code, :excluded_postcodes] => :environment do |_, args|
     require 'csv'
+
+    raise ArgumentError, 'country_code is missing' if args[:country_code].blank?
+
+    country_code = args[:country_code]
+    excluded_postcodes = []
+    excluded_postcodes = excluded_postcodes.split(',') if args[:excluded_postcodes].present?
 
     file_path = Rails.root.join('search_units.csv')
 
@@ -143,7 +149,7 @@ namespace :places do
       SearchGrid.where.not(postcode: excluded_postcodes)
                 .where(status: :finished, is_land: true).find_each do |unit|
         csv << [
-          'AU',
+          country_code,
           unit.postcode,
           unit.ne_lat,
           unit.ne_lng,
