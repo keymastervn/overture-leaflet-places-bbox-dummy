@@ -73,6 +73,24 @@
 <div id="map"></div>
 
 <div id="actions">
+  <div class="mui-input-container">
+    <span>How to: click DROP THE PIN first, then adjust the pin size before rendering grids or markers</span>
+  </div>
+  <div class="mui-input-container">
+    <label for="pinRadius">Radius:</label>
+    <div style="display: flex; flex-grow: 1; align-items: center;">
+      <button id="decreaseRadius" class="" style="width: 30px; height: 34px; display: flex; justify-content: center; align-items: center; border: 1px solid #ccc; border-radius: 4px 0 0 4px; background-color: #f5f5f5; cursor: pointer;">-</button>
+      <input type="text" id="pinRadius" name="pinRadius" value="3000" style="height: 16px; flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 0; border-left: none; border-right: none;"/>
+      <button id="increaseRadius" class="" style="width: 30px; height: 34px; display: flex; justify-content: center; align-items: center; border: 1px solid #ccc; border-radius: 0 4px 4px 0; background-color: #f5f5f5; cursor: pointer;">+</button>
+    </div>
+  </div>
+
+  <button id="dropPin" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">add_location</span> Drop the pin
+  </button>
+
+  <div style="margin: 15px 0; height: 1px; background-color: #e0e0e0;"></div>
+
   <button id="displayMarkerClusters" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
     <span class="material-icons" style="margin-right: 5px;">layers</span> Display Marker Clusters
   </button>
@@ -87,15 +105,6 @@
 
   <button id="displayGrids" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
     <span class="material-icons" style="margin-right: 5px;">grid_on</span> Display Grids
-  </button>
-
-  <div class="mui-input-container">
-    <label for="pinRadius">Radius:</label>
-    <input type="text" id="pinRadius" name="pinRadius" value="3000"/>
-  </div>
-
-  <button id="dropPin" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
-    <span class="material-icons" style="margin-right: 5px;">add_location</span> Drop the pin
   </button>
 </div>
 
@@ -142,7 +151,7 @@
   const STARTING_POINT = {
     SYDNEY_ANDERSON_STUART_BUILDING: [-33.887117, 151.189334],
     CENTER_OF_MANCHESTER: [53.48012918863774, -2.2673463821411137],
-    TORONTO_OF_MANCHESTER: [43.5852081, -79.5613104],
+    TORONTO_LAKEVIEW: [43.5852081, -79.5613104],
   }
 
   const map = L.map("map").setView(STARTING_POINT.SYDNEY_ANDERSON_STUART_BUILDING, 13);
@@ -232,13 +241,13 @@
 
   function showMarkers() {
     $mapMarkers.forEach(place => {
-      const { latitude, longitude, name, addresses } = place;
+      const { id, latitude, longitude, name, addresses, primary_categories } = place;
       const mainAddress = [addresses[0]['freeform'], addresses[0]['postcode'], addresses[0]['region']].join(', ');
 
       const markerId = `${latitude},${longitude}`; // prevent dup
       if (!addedMarkerIds.has(markerId)) {
         const marker = L.marker([latitude, longitude])
-          .bindPopup(markerDOM(name, mainAddress, latitude, longitude));
+          .bindPopup(markerDOM(id, name, mainAddress, primary_categories, latitude, longitude));
 
         marker.addTo(map);
         markers.push(marker);
@@ -368,7 +377,7 @@
 
     updatePinPopup();
 
-    // Create a circle with 50% opacity
+    // Create a circle with 20% opacity
     radiusCircle = L.circle([lat, lng], {
       radius: pinRadius,
       color: '#3388ff',
@@ -477,5 +486,26 @@
   document.getElementById('pinRadius').addEventListener('input', function() {
     pinRadius = parseInt(this.value, 10) || 3000;
     updateRadiusCircle();
+  });
+
+  document.getElementById('increaseRadius').addEventListener('click', function() {
+    const radiusInput = document.getElementById('pinRadius');
+    const currentValue = parseInt(radiusInput.value, 10) || 3000;
+    radiusInput.value = currentValue + 1000;
+
+    // Trigger the input event to update the radius
+    const inputEvent = new Event('input');
+    radiusInput.dispatchEvent(inputEvent);
+  });
+
+  document.getElementById('decreaseRadius').addEventListener('click', function() {
+    const radiusInput = document.getElementById('pinRadius');
+    const currentValue = parseInt(radiusInput.value, 10) || 3000;
+    const newValue = Math.max(1000, currentValue - 1000); // Prevent going below 1000
+    radiusInput.value = newValue;
+
+    // Trigger the input event to update the radius
+    const inputEvent = new Event('input');
+    radiusInput.dispatchEvent(inputEvent);
   });
 </script>
