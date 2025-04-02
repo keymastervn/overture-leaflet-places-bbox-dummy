@@ -1,67 +1,111 @@
 <style type="text/css">
   html, body {
-    height: 100%; /* Ensures the body and HTML elements fill the entire viewport */
-    margin: 0; /* Removes default margins */
-    overflow: hidden; /* Prevents scrolling if content overflows */
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   }
 
-  #actions button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-
-  #actions button:hover {
-    background-color: #0056b3; /* Changes button color on hover */
+  #map {
+    height: 100%;
+    width: 100%;
+    position: relative;
   }
 
   #actions {
-    position: fixed; /* Ensures the actions panel stays in one place */
-    bottom: 20px; /* Adjusts the distance from the bottom of the viewport */
-    right: 20px; /* Adjusts the distance from the right side of the viewport */
-    z-index: 1000; /* Ensures it is above other elements */
-    background-color: rgba(255, 255, 255, 0.9); /* Adds a semi-transparent background */
-    padding: 10px; /* Adds some inner spacing */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Gives a subtle shadow for better visibility */
-    border-radius: 8px; /* Rounds the corners */
-    border: 1px solid #ccc; /* Optional: Adds a light border */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background-color: white;
+    padding: 16px;
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),
+                0px 6px 10px 0px rgba(0,0,0,0.14),
+                0px 1px 18px 0px rgba(0,0,0,0.12);
+    border-radius: 8px;
+    width: 300px;
+  }
+
+  .mui-button {
+    margin: 5px 0;
+    display: block;
+    width: 100%;
+  }
+
+  .mui-input-container {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+  }
+
+  .mui-input-container label {
+    margin-right: 10px;
+    font-size: 14px;
+  }
+
+  .mui-input-container input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  #pin-placement-overlay {
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  }
+
+  .mui-overlay-card {
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),
+                0px 6px 10px 0px rgba(0,0,0,0.14),
+                0px 1px 18px 0px rgba(0,0,0,0.12);
+    text-align: center;
+  }
+
+  .mui-overlay-card h4 {
+    margin-top: 0;
+    color: rgba(0, 0, 0, 0.87);
   }
 </style>
 
-<div id="map" style="height: 100%; width: 100%; position: relative;"></div>
-<div id="actions" style="height: 200px; margin: 0; padding: 0;">
-  <button id="displayMarkerClusters">Display Marker Clusters</button>
+<div id="map"></div>
 
-  <button id="displayMarkers">✅ Display Markers</button>
+<div id="actions">
+  <button id="displayMarkerClusters" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">layers</span> Display Marker Clusters
+  </button>
 
-  <button id="clearMarkers"> ❌ Clear all Markers</button>
+  <button id="displayMarkers" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">place</span> Display Markers
+  </button>
 
-  <br />
-  <br />
+  <button id="clearMarkers" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">clear</span> Clear all Markers
+  </button>
 
-  <button id="displayGrids"> ✅ Display Grids</button>
-  <br />
-  <br />
+  <button id="displayGrids" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">grid_on</span> Display Grids
+  </button>
 
-  <label for="pinRadius">Radius:</label>
-  <input
-    type="text"
-    id="pinRadius"
-    name="pinRadius"
-    value="3000"/>
+  <div class="mui-input-container">
+    <label for="pinRadius">Radius:</label>
+    <input type="text" id="pinRadius" name="pinRadius" value="3000"/>
+  </div>
 
-  <button id="dropPin">Drop the pin 📌</button>
-
+  <button id="dropPin" class="mui-button" style="display: flex; align-items: center; justify-content: center;">
+    <span class="material-icons" style="margin-right: 5px;">add_location</span> Drop the pin
+  </button>
 </div>
+
 <div id="pin-placement-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.2); z-index: 1001; pointer-events: none;">
-  <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+  <div class="mui-overlay-card" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%);">
     <h4>Click on the map to place your pin</h4>
-    <button id="cancel-pin-placement" style="display: block; margin: 10px auto; padding: 5px 10px;">Cancel</button>
+    <button id="cancel-pin-placement" class="mui-button" style="display: block; margin: 10px auto; padding: 5px 10px;">Cancel</button>
   </div>
 </div>
+
 <script>
   function debouncePromise(func, wait) {
     let timeout;
